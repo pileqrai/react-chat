@@ -23,6 +23,7 @@ class App extends React.Component {
                 >
                     Add second chat window
                 </button>
+                <div className="small text-muted mt-3">Or in open another <a href="" target='_blank'>tab</a></div>
             </div>;
         return (
             <div className="App container">
