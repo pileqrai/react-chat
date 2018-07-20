@@ -8,12 +8,27 @@ import './App.scss';
 * */
 
 class App extends React.Component {
+    state = {
+        hasSecondChat: false,
+    };
+
     render() {
+        const secondColumn = this.state.hasSecondChat ?
+            <Chat/>
+            :
+            <div className="text-center mt-5">
+                <button
+                    className="btn btn-lg btn-outline-primary"
+                    onClick={() => this.setState({hasSecondChat: true})}
+                >
+                    Add second chat window
+                </button>
+            </div>;
         return (
             <div className="App container">
                 <div className="row chat-container">
-                    <div className="col-6"><Chat></Chat></div>
-                    <div className="col-6"><Chat></Chat></div>
+                    <div className="col-6"><Chat/></div>
+                    <div className="col-6">{secondColumn}</div>
                 </div>
             </div>
         );
