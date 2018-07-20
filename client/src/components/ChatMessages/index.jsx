@@ -30,7 +30,7 @@ export default class ChatMessages extends React.Component {
                 'message--other-person': msg.sourceConnectionId && msg.sourceConnectionId !== this.props.connectionId,
             });
 
-            const messageContent = msg.data.type === 'text' ? (
+            const messageContent = msg.data.type !== 'info' ? (
                 <Emojify style={{height: 24, width: 24}}>
                     {msg.data.text}
                 </Emojify>

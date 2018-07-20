@@ -259,6 +259,9 @@ export default class Chat extends React.Component {
 
     sendTextMessage() {
         const text = this.state.message;
+
+        if (!this.state.targetUserName && text != '/help') return;
+
         if (text) {
             if (/^\/\w.*/.test(text)) {
                 const command = /^\/(\w+)(?:\s)?(.*)?/i.exec(text);
@@ -268,7 +271,6 @@ export default class Chat extends React.Component {
                     commandArguments: command[2],
                 });
             } else {
-                if (!this.state.targetUserName) return;
                 this.sendMessage('text', {
                     text,
                     type: 'normal',
