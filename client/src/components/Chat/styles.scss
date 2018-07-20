@@ -1,0 +1,48 @@
+@import "~bootstrap/scss/bootstrap";
+
+.Chat {
+  $border: 1px solid $gray-200;
+
+  border: $border;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  .initial-screen {
+    @extend .p-4
+  }
+
+  .top-bar, .ChatMessages {
+    @extend .p-4;
+    border-bottom: $border;
+  }
+
+  .message-input {
+    @extend .p-4, .pt-0;
+  }
+
+  .top-bar {
+    @extend .d-flex, .justify-content-between, .align-items-center;
+    flex-shrink: 0;
+  }
+
+  .ChatMessages {
+    flex: 1 1 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+
+  }
+  .status {
+    @extend .text-muted, .small, .text-center;
+
+    flex-shrink: 0;
+    height: 2.5em;
+    line-height: 2.5em;
+    padding: 0;
+  }
+
+  .message-input {
+    flex-shrink: 0;
+    padding-top: 0 !important;
+  }
+}

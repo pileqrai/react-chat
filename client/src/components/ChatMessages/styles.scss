@@ -1,0 +1,138 @@
+@import "~bootstrap/scss/bootstrap";
+
+.ChatMessages {
+  display: flex;
+  flex-direction: column;
+
+  .message {
+    $mine-background-color: #53da4f;
+    $triangle-tip-size: 20px;
+
+    @extend .my-3, .py-1, .px-2;
+    border-radius: $border-radius;
+
+    &:first-child {
+      margin-top: 0 !important;
+    }
+
+    &:last-child {
+      margin-bottom: 0 !important;
+    }
+
+    &--info {
+      @extend .text-center;
+      border: 1px solid $info;
+      color: $info;
+    }
+
+    &--error {
+      @extend .text-center, .alert, .alert-danger;
+    }
+
+    &--think {
+      @extend .text-muted;
+    }
+
+    &--faded {
+      opacity: 0.1;
+    }
+
+    &--highlight {
+      font-size: 1.1em;
+
+      &.message--mine {
+        $bg-color: darken($mine-background-color, 10%);
+
+        background: $bg-color;
+
+        &::before {
+          border-left-color: $bg-color;
+        }
+      }
+
+      &.message--other-person {
+        $bg-color: darken($gray-200, 10%);
+
+        background: $bg-color;
+
+        &::before {
+          border-bottom-color: $bg-color;
+        }
+      }
+    }
+
+    @keyframes slidein-mine {
+      0% {
+        left: 100%;
+      }
+
+      100% {
+        left: 0;
+      }
+    }
+
+    @keyframes slidein-other-person {
+      0% {
+        right: 100%;
+      }
+
+      100% {
+        right: 0;
+      }
+    }
+
+    &--other-person {
+      align-self: flex-start;
+      background: $gray-200;
+      border-bottom-left-radius: 0;
+      max-width: 50%;
+      margin-left: $triangle-tip-size;
+      position: relative;
+      animation: slidein-other-person ease-in 0.25s forwards;
+
+
+      &::before {
+        border-style: solid;
+        border-width: 0 0 $triangle-tip-size $triangle-tip-size;
+        border-color: transparent transparent $gray-200 transparent;
+        bottom: 0;
+        content: '';
+        height: 0;
+        position: absolute;
+        right: 100%;
+        width: 0;
+      }
+    }
+
+    &--mine {
+      align-self: flex-end;
+      background: $mine-background-color;
+      border-bottom-right-radius: 0;
+      margin-right: $triangle-tip-size;
+      max-width: 50%;
+      position: relative;
+      animation: slidein-mine ease-in 0.25s forwards;
+
+
+      &::before {
+        border-style: solid;
+        border-width: 20px 0 0 20px;
+        border-color: transparent transparent transparent $mine-background-color;
+        bottom: 0;
+        content: '';
+        height: 0;
+        position: absolute;
+        left: 100%;
+        width: 0;
+      }
+
+      .date {
+        text-align: right;
+      }
+    }
+
+    .date {
+      font-size: 0.6em;
+    }
+  }
+}
