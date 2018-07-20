@@ -1,6 +1,6 @@
 ## Server
 To run server application first do:
- 1. `npm install -g nodemon babel-cli` - on Unix like systems, use sudo
+ 1. `npm install -g nodemon babel-cli`
  2. `cd server`
  3. `npm install`
  4. `npm start`.
