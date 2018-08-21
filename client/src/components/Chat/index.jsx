@@ -256,7 +256,7 @@ export class Chat extends React.Component {
     sendTextMessage() {
         const text = this.state.message;
 
-        if (!this.state.targetUserName && text != '/help') return;
+        if (!this.props.connection.targetUserName && text != '/help') return;
 
         if (text) {
             if (/^\/\w.*/.test(text)) {
@@ -284,7 +284,7 @@ export class Chat extends React.Component {
 
         const connectionMessage = this.props.connection.targetUserName ? (
             <React.Fragment>
-                Connected as {this.props.connection.userName} with <strong>{this.state.targetUserName}</strong>
+                Connected as {this.props.connection.userName} with <strong>{this.props.connection.targetUserName}</strong>
             </React.Fragment>) : 'Waiting for other user...';
 
         return (
@@ -305,7 +305,7 @@ export class Chat extends React.Component {
                         </div>
                         <ChatMessages
                             messages={this.props.textMessages}
-                            connectionId={this.state.connectionId}
+                            connectionId={this.props.connection.connectionId}
                         />
                         <div className="status">
                             {this.props.connection.status}
@@ -327,7 +327,7 @@ export class Chat extends React.Component {
                                 <button
                                     onClick={() => this.sendTextMessage()}
                                     className="btn btn-outline-primary"
-                                    disabled={!this.state.message || !this.state.targetUserName}
+                                    disabled={!this.state.message || !this.props.connection.targetUserName}
                                     type="button"
                                 >
                                     Send

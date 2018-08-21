@@ -1,7 +1,4 @@
-export const handleMessage = (message) => ({
-    message
-});
-
+export const ADD_TARGET_USER = 'ADD_TARGET_USER';
 export const SEND_MESSAGE = 'SEND_MESSAGE';
 export const MESSAGE_SENT = 'MESSAGE_SENT';
 export const ADD_MESSAGE = 'ADD_MESSAGE';
@@ -9,6 +6,7 @@ export const JOIN_CHAT = 'JOIN_CHAT';
 export const JOINED_CHAT = 'JOINED_CHAT';
 export const ADD_CHAT = 'ADD_CHAT';
 export const SET_STATUS = 'SET_STATUS';
+export const USER_NAME_CHANGE = 'USER_NAME_CHANGE';
 
 export const sendMessage = (connection, type, content = null) => {
     const message = {
@@ -19,42 +17,65 @@ export const sendMessage = (connection, type, content = null) => {
         data: {
             ...content,
         },
+        targetUserName: null,
     };
 
-    if (connection.ws) {
-        connection.ws.send(JSON.stringify(message));
 
-        return {
-            type: SEND_MESSAGE,
-            connectionId: connection.connectionId,
-            message,
-        }
-    } else {
-        debugger;
+    connection.ws.send(JSON.stringify(message));
+
+    return {
+        type: SEND_MESSAGE,
+        connection: connection,
+        message,
     }
+
 };
 
-export const handleCommandMessage = (message, connection) => {
+export const handleCommandMessage = (message, connection, dispatch) => {
     let newAction;
     switch (message.data.command) {
         case 'userJoined':
-            newAction = {
-                type: ADD_MESSAGE,
-                connection,
-                message: {
-                    type: 'text',
-                    data: {
-                        type: 'info',
-                        text: `${message.data.userName} has joined`,
-                    },
+            dispatch(addTargetUser(connection, message.data.userName));
+            newAction = addMessage(connection, {
+                type: 'text',
+                data: {
+                    type: 'info',
+                    text: `${message.data.userName} has joined`,
+                },
+            });
+            break;
+        case 'joinedOtherUser':
+            dispatch(addTargetUser(connection, message.data.userName));
+            newAction = addMessage(connecton, {
+                type: 'text',
+                data: {
+                    type: 'info',
+                    text: `You have joined ${message.data.userName}`,
+                },
+            });
+            break;
+        case 'userNameChange':
+            dispatch(userNameChange(message.sourceConnectionId, message.data.to));
+            const text = message.sourceConnectionId === connection.connectionId ?
+                `You have renamed from ${message.data.from} to ${message.data.to}` :
+                `${message.data.from} renamed to ${message.data.to}`;
+
+            newAction = addMessage(connection, {
+                type: 'text',
+                data: {
+                    type: 'info',
+                    text,
                 }
-            }
+            });
+            break;
+        case 'userDisconnected':
+            newAction = addMessage()
     }
 
     return newAction;
 };
 
-export const joinChat = (index, login) => dispatch =>  {
+export const joinChat = (index, login) => dispatch => {
     const ws = new WebSocket('ws://localhost:8085');
     const connection = {
         ws,
@@ -65,24 +86,15 @@ export const joinChat = (index, login) => dispatch =>  {
 
     ws.onmessage = (msg) => {
         const message = JSON.parse(msg.data);
-        //
+
         switch (message.type) {
             case 'command':
-                dispatch(addMessage(connection, {
-                    type: 'text',
-                    data: {
-                        type: 'info',
-                        text: 'test'
-                    }
-                }));
-                const handledCommand = handleCommandMessage(message, connection);
+                const handledCommand = handleCommandMessage(message, connection, dispatch);
                 dispatch(handledCommand);
                 break;
-            //     case 'text':
-            //         this.setState({
-            //             textMessages: [...this.state.textMessages, message],
-            //         });
-            //         break;
+            case 'text':
+                dispatch(addMessage(connection, message));
+                break;
             case 'startedTyping':
                 dispatch(setStatus(connection.connectionId, `${message.userName} is typing...`));
                 break;
@@ -92,17 +104,14 @@ export const joinChat = (index, login) => dispatch =>  {
             case 'welcome':
                 connection.connectionId = message.data.connectionId;
                 connection.isConnected = true;
-                dispatch(sendMessage(connection, 'login'));
-
                 dispatch({
                     type: JOINED_CHAT,
                     index,
                     connection,
                 });
-                //resolve(message.data.connectionId);
+
+                dispatch(sendMessage(connection, 'login'));
                 break;
-            //     default:
-            //         break;
         }
     };
 
@@ -156,9 +165,14 @@ export const addMessage = (connection, message) => ({
     message,
 });
 
-const a = {
-    B: 3,
-    C: 4,
-};
+export const addTargetUser = (connection, targetUserName) => ({
+    type: ADD_TARGET_USER,
+    connection,
+    targetUserName,
+});
 
-export const ACT = Object.keys(a);
+export const userNameChange = (connectionId, newUserName) => ({
+    type: USER_NAME_CHANGE,
+    connectionId,
+    newUserName
+})
