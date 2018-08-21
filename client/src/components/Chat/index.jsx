@@ -1,6 +1,9 @@
 import React from 'react';
 import ChatMessages from '../ChatMessages';
 import './styles.scss';
+import {sendMessage, joinChat} from "../../actions";
+import {connect} from 'react-redux';
+import * as PropTypes from "prop-types";
 
 const initialState = {
     isConnected: false,
@@ -11,8 +14,13 @@ const initialState = {
     message: '',
     userName: '',
 };
-export default class Chat extends React.Component {
+
+export class Chat extends React.Component {
     state = initialState;
+
+    constructor(props) {
+        super(props);
+    }
 
     componentDidMount() {
         this.userNameInputRef && this.userNameInputRef.focus();
@@ -23,70 +31,73 @@ export default class Chat extends React.Component {
     }
 
     connect() {
-        const ws = new WebSocket('ws://localhost:8085');
+        // const ws = new WebSocket('ws://localhost:8085');
+        //
+        // this.setState({
+        //     connectionError: null,
+        // });
+        //
+        // ws.onmessage = (msg) => {
+        //     const message = JSON.parse(msg.data);
+        //
+        //     switch (message.type) {
+        //         case 'command':
+        //             this.handleCommand(message);
+        //             break;
+        //         case 'text':
+        //             this.setState({
+        //                 textMessages: [...this.state.textMessages, message],
+        //             });
+        //             break;
+        //         case 'startedTyping':
+        //             this.setState({
+        //                 status: `${message.userName} is typing...`,
+        //             });
+        //             break;
+        //         case 'stoppedTyping':
+        //             this.setState({
+        //                 status: null,
+        //             });
+        //             break;
+        //         case 'welcome':
+        //             this.setState({
+        //                 connectionId: message.data.connectionId,
+        //             });
+        //             break;
+        //         default:
+        //             break;
+        //     }
+        // };
+        //
+        // ws.onclose = (event) => {
+        //     this.setState(initialState);
+        //
+        //     if (event.code === 4000) {
+        //         this.setState({
+        //             connectionError: event.reason,
+        //         });
+        //         this.userNameInput.value = this.userName;
+        //     } else if (event.code === 1006) {
+        //         this.setState({
+        //             connectionError: 'Server unreachable',
+        //         });
+        //     }
+        // };
+        //
+        // ws.onopen = () => {
+        //     this.setState({
+        //         isConnected: true,
+        //     });
+        //
+        //     this.sendMessage('login');
+        //     this.messageInputRef.focus();
+        // };
+        //
+        // this.props.onConnect(this.state.userName);
+        //
+        // this.webSocket = ws;
 
-        this.setState({
-            connectionError: null,
-        });
-
-        ws.onmessage = (msg) => {
-            const message = JSON.parse(msg.data);
-
-            switch (message.type) {
-                case 'command':
-                    this.handleCommand(message);
-                    break;
-                case 'text':
-                    this.setState({
-                        textMessages: [...this.state.textMessages, message],
-                    });
-                    break;
-                case 'startedTyping':
-                    this.setState({
-                        status: `${message.userName} is typing...`,
-                    });
-                    break;
-                case 'stoppedTyping':
-                    this.setState({
-                        status: null,
-                    });
-                    break;
-                case 'welcome':
-                    this.setState({
-                        connectionId: message.data.connectionId,
-                    });
-                    break;
-                default:
-                    break;
-            }
-        };
-
-        ws.onclose = (event) => {
-            this.setState(initialState);
-
-            if (event.code === 4000) {
-                this.setState({
-                    connectionError: event.reason,
-                });
-                this.userNameInput.value = this.userName;
-            } else if (event.code === 1006) {
-                this.setState({
-                    connectionError: 'Server unreachable',
-                });
-            }
-        };
-
-        ws.onopen = () => {
-            this.setState({
-                isConnected: true,
-            });
-
-            this.sendMessage('login');
-
-            this.messageInputRef.focus();
-        };
-
-        this.webSocket = ws;
+        this.props.onConnect(this.state.userName);
     }
 
     disconnect() {
@@ -220,22 +231,7 @@ export default class Chat extends React.Component {
     }
 
     sendMessage(type, content = null) {
-        const msg = {
-            type,
-            id: Date.now(),
-            userName: this.state.userName,
-            sourceConnectionId: this.state.connectionId,
-            data: {
-                ...content,
-            },
-        };
-        if (type === 'text') {
-            this.setState({
-                textMessages: [...this.state.textMessages, msg],
-            });
-        }
-
-        this.webSocket.send(JSON.stringify(msg));
+        this.props.onSendMessage(type,content);
     }
 
     messageInputChangeHandler(e) {
@@ -286,14 +282,15 @@ export default class Chat extends React.Component {
 
     render() {
 
-        const connectionMessage = this.state.targetUserName ? (
+        const connectionMessage = this.props.connection.targetUserName ? (
             <React.Fragment>
-                Connected as {this.state.userName} with <strong>{this.state.targetUserName}</strong>
+                Connected as {this.props.connection.userName} with <strong>{this.state.targetUserName}</strong>
             </React.Fragment>) : 'Waiting for other user...';
 
         return (
             <div className="Chat">
-                {this.state.isConnected ? (
+                {JSON.stringify(this.props.connection)}
+                {this.props.isConnected ? (
                     <React.Fragment>
                         <div className="top-bar">
                             <div className="text-muted small">
@@ -307,11 +304,11 @@ export default class Chat extends React.Component {
                             </button>
                         </div>
                         <ChatMessages
-                            messages={this.state.textMessages}
+                            messages={this.props.textMessages}
                             connectionId={this.state.connectionId}
                         />
                         <div className="status">
-                            {this.state.status}
+                            {this.props.connection.status}
                         </div>
                         <div className="message-input input-group">
                             <input
@@ -322,7 +319,9 @@ export default class Chat extends React.Component {
                                 onKeyUp={e => e.key === 'Enter' && this.sendTextMessage()}
                                 value={this.state.message}
                                 placeholder="Type message or /help"
-                                ref={el => {this.messageInputRef = el}}
+                                ref={el => {
+                                    this.messageInputRef = el
+                                }}
                             />
                             <div className="input-group-append">
                                 <button
@@ -371,3 +370,20 @@ export default class Chat extends React.Component {
         );
     }
 }
+
+export default connect((state, ownProps) => {
+    return {
+        textMessages: state.messages[ownProps.connection.connectionId] || [],
+        ...ownProps.connection,
+        // connection: ownProps.connection,
+    }
+}, (dispatch, ownProps) => {
+    return {
+        onConnect: login => {
+            return dispatch(joinChat(ownProps.index, login));
+        },
+        onSendMessage: (type, content) => {
+            dispatch(sendMessage(ownProps.connection, type, content));
+        }
+    }
+})(Chat)
