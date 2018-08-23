@@ -1,12 +1,16 @@
 export const ADD_TARGET_USER = 'ADD_TARGET_USER';
 export const SEND_MESSAGE = 'SEND_MESSAGE';
 export const MESSAGE_SENT = 'MESSAGE_SENT';
+export const USER_DISCONNECTED = 'USER_DISCONNECTED';
 export const ADD_MESSAGE = 'ADD_MESSAGE';
 export const JOIN_CHAT = 'JOIN_CHAT';
 export const JOINED_CHAT = 'JOINED_CHAT';
 export const ADD_CHAT = 'ADD_CHAT';
 export const SET_STATUS = 'SET_STATUS';
 export const USER_NAME_CHANGE = 'USER_NAME_CHANGE';
+export const DISCONNECT = 'DISCONNECT';
+export const FADE_LAST = 'FADE_LAST';
+export const OOPS = 'OOPS';
 
 export const sendMessage = (connection, type, content = null) => {
     const message = {
@@ -69,7 +73,22 @@ export const handleCommandMessage = (message, connection, dispatch) => {
             });
             break;
         case 'userDisconnected':
-            newAction = addMessage()
+            dispatch(addMessage(connection, {
+                type: 'text',
+                data: {
+                    type: 'info',
+                    text: `${message.data.userName} has left`,
+                },
+            }));
+
+            newAction = userDisconnected(connection.connectionId);
+            break;
+        case 'fadelast':
+            newAction = fadeLast(connection.connectionId, message.sourceConnectionId);
+            break;
+        case 'oops':
+            newAction = oops(connection.connectionId, message.sourceConnectionId);
+            break;
     }
 
     return newAction;
@@ -150,6 +169,11 @@ export const setStatus = (connectionId, status) => ({
     status,
 });
 
+export const userDisconnected = (connectionId) => ({
+    type: USER_DISCONNECTED,
+    connectionId,
+});
+
 export const joinedChat = (ws) => ({
     type: START_CHAT,
     ws,
@@ -174,5 +198,22 @@ export const addTargetUser = (connection, targetUserName) => ({
 export const userNameChange = (connectionId, newUserName) => ({
     type: USER_NAME_CHANGE,
     connectionId,
-    newUserName
-})
+    newUserName,
+});
+
+export const disconnect = (connection) => ({
+    type: DISCONNECT,
+    connection,
+});
+
+export const fadeLast = (connectionId, targetConnectionId) => ({
+    type: FADE_LAST,
+    connectionId,
+    targetConnectionId,
+});
+
+export const oops = (connectionId, targetConnectionId) => ({
+    type: OOPS,
+    connectionId,
+    targetConnectionId,
+});

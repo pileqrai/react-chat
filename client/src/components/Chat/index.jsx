@@ -1,9 +1,8 @@
 import React from 'react';
 import ChatMessages from '../ChatMessages';
 import './styles.scss';
-import {sendMessage, joinChat} from "../../actions";
+import {sendMessage, joinChat, disconnect} from "../../actions";
 import {connect} from 'react-redux';
-import * as PropTypes from "prop-types";
 
 const initialState = {
     isConnected: false,
@@ -27,76 +26,12 @@ export class Chat extends React.Component {
     }
 
     componentWillUnmount() {
-        this.disconnect();
+        if (this.props.connection.ws && this.props.connection.ws.readyState < WebSocket.CLOSING) {
+            this.disconnect();
+        }
     }
 
     connect() {
-        // const ws = new WebSocket('ws://localhost:8085');
-        //
-        // this.setState({
-        //     connectionError: null,
-        // });
-        //
-        // ws.onmessage = (msg) => {
-        //     const message = JSON.parse(msg.data);
-        //
-        //     switch (message.type) {
-        //         case 'command':
-        //             this.handleCommand(message);
-        //             break;
-        //         case 'text':
-        //             this.setState({
-        //                 textMessages: [...this.state.textMessages, message],
-        //             });
-        //             break;
-        //         case 'startedTyping':
-        //             this.setState({
-        //                 status: `${message.userName} is typing...`,
-        //             });
-        //             break;
-        //         case 'stoppedTyping':
-        //             this.setState({
-        //                 status: null,
-        //             });
-        //             break;
-        //         case 'welcome':
-        //             this.setState({
-        //                 connectionId: message.data.connectionId,
-        //             });
-        //             break;
-        //         default:
-        //             break;
-        //     }
-        // };
-        //
-        // ws.onclose = (event) => {
-        //     this.setState(initialState);
-        //
-        //     if (event.code === 4000) {
-        //         this.setState({
-        //             connectionError: event.reason,
-        //         });
-        //         this.userNameInput.value = this.userName;
-        //     } else if (event.code === 1006) {
-        //         this.setState({
-        //             connectionError: 'Server unreachable',
-        //         });
-        //     }
-        // };
-        //
-        // ws.onopen = () => {
-        //     this.setState({
-        //         isConnected: true,
-        //     });
-        //
-        //     this.sendMessage('login');
-        //     this.messageInputRef.focus();
-        // };
-        //
-        // this.props.onConnect(this.state.userName);
-        //
-        // this.webSocket = ws;
-
         this.props.onConnect(this.state.userName);
     }
 
@@ -104,7 +39,7 @@ export class Chat extends React.Component {
         this.sendMessage('command', {
             command: 'disconnect',
         });
-        this.webSocket.close();
+        this.props.onDisconnect();
         this.setState(initialState);
     }
 
@@ -112,89 +47,6 @@ export class Chat extends React.Component {
         const messages = this.state.textMessages;
 
         switch (msg.data.command) {
-            case 'userJoined':
-                this.setState({
-                    targetUserName: msg.data.userName,
-                    textMessages: [...messages, {
-                        type: 'text',
-                        data: {
-                            type: 'info',
-                            text: `${msg.data.userName} has joined`,
-                        },
-                    }],
-                });
-                break;
-            case 'joinedOtherUser':
-                this.setState({
-                    targetUserName: msg.data.userName,
-                    textMessages: [...messages, {
-                        type: 'text',
-                        data: {
-                            type: 'info',
-                            text: `You have joined ${msg.data.userName}`,
-                        },
-                    }],
-                });
-                break;
-            case 'userNameChange':
-                if (msg.sourceConnectionId === this.state.connectionId) {
-                    this.setState({
-                        userName: msg.data.to,
-                        textMessages: [...messages, {
-                            type: 'text',
-                            data: {
-                                type: 'info',
-                                text: `You have renamed from ${msg.data.from} to ${msg.data.to}`,
-                            },
-                        }],
-                    });
-                } else {
-                    this.setState({
-                        targetUserName: msg.data.to,
-                        textMessages: [...messages, {
-                            type: 'text',
-                            data: {
-                                type: 'info',
-                                text: `${msg.data.from} renamed to ${msg.data.to}`,
-                            },
-                        }],
-                    });
-                }
-                break;
-            case 'userDisconnected':
-                this.setState({
-                    targetUserName: null,
-                    textMessages: [...messages, {
-                        type: 'text',
-                        data: {
-                            type: 'info',
-                            text: `${msg.data.userName} has left`,
-                        },
-                    }],
-                });
-                break;
-            case 'fadelast':
-                var indexToChange = this.getLastMessageIndex(msg.sourceConnectionId);
-
-                if (indexToChange) {
-                    messages[indexToChange].data.type = 'faded';
-
-                    this.setState({
-                        textMessages: messages,
-                    });
-                }
-                break;
-            case 'oops':
-                var indexToRemove = this.getLastMessageIndex(msg.sourceConnectionId);
-
-                if (indexToRemove) {
-                    messages.splice(indexToRemove, 1);
-
-                    this.setState({
-                        textMessages: messages,
-                    });
-                }
-                break;
             case 'countdown':
                 let i = msg.data.time;
 
@@ -216,22 +68,8 @@ export class Chat extends React.Component {
         }
     }
 
-    getLastMessageIndex(connectionId) {
-        const messages = this.state.textMessages;
-        let indexToRemove;
-
-        for (let i = messages.length - 1; i >= 0; i--) {
-            if ((messages[i].sourceConnectionId === this.state.connectionId || messages[i].sourceConnectionId === connectionId) && messages[i].data.type !== 'info') {
-                indexToRemove = i;
-                break;
-            }
-        }
-
-        return indexToRemove;
-    }
-
     sendMessage(type, content = null) {
-        this.props.onSendMessage(type,content);
+        this.props.onSendMessage(type, content);
     }
 
     messageInputChangeHandler(e) {
@@ -284,12 +122,12 @@ export class Chat extends React.Component {
 
         const connectionMessage = this.props.connection.targetUserName ? (
             <React.Fragment>
-                Connected as {this.props.connection.userName} with <strong>{this.props.connection.targetUserName}</strong>
+                Connected
+                as {this.props.connection.userName} with <strong>{this.props.connection.targetUserName}</strong>
             </React.Fragment>) : 'Waiting for other user...';
 
         return (
             <div className="Chat">
-                {JSON.stringify(this.props.connection)}
                 {this.props.isConnected ? (
                     <React.Fragment>
                         <div className="top-bar">
@@ -375,12 +213,14 @@ export default connect((state, ownProps) => {
     return {
         textMessages: state.messages[ownProps.connection.connectionId] || [],
         ...ownProps.connection,
-        // connection: ownProps.connection,
     }
 }, (dispatch, ownProps) => {
     return {
         onConnect: login => {
             return dispatch(joinChat(ownProps.index, login));
+        },
+        onDisconnect: () => {
+            return dispatch(disconnect(ownProps.connection));
         },
         onSendMessage: (type, content) => {
             dispatch(sendMessage(ownProps.connection, type, content));

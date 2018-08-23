@@ -18,6 +18,7 @@ function handleCommand(msgObject, ws) {
                     '<li><code>/fadelast</code> fades out your last message</li>\n' +
                     '<li><code>/countdown NUMBER URL</code> redirects other user to URL after NUMBER of seconds</li>\n' +
                     '<li><code>/nick USERNAME</code> changes your name to USERNAME</li>\n' +
+                    '<li><code>/oops</code> removes your last message</li>\n' +
                     '<li><code>/think CONTENT</code> shows your message\'s CONTENT with light bulb and different styling</li>\n' +
                     '<li><code>/help</code> displays this help</li>\n' +
                     '</ul></div>',
