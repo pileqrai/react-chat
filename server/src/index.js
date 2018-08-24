@@ -169,7 +169,7 @@ function handleIncomingMessage(msgObject, ws) {
 }
 
 wss.on('connection', (ws, req) => {
-    if (wss.clients.size > 2) {
+    if (wss.clients.size > 3) {
         const error = 'Chat room already has 2 users';
         ws.send(`closing connection: ${error}`);
         ws.close(4000, error);

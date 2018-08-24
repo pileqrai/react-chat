@@ -51,6 +51,9 @@ export default class ChatMessages extends React.Component {
                     key={`${msg.sourceConnectionId}#${msg.id}`}
                     className={classes}
                 >
+	                <div className="date">
+		                {msg.userName}
+	                </div>
                     <div className="content">
                         {messageContent}
                     </div>
