@@ -10,11 +10,15 @@ class App extends React.Component<null, {
 
 	constructor(props) {
 		super(props);
+		this.autoConnect = false;
 	}
 
 	componentDidMount() {
-		this.props.addChat();
-		this.props.addChat();
+		if (this.autoConnect) {
+			this.props.addChat();
+			this.props.addChat();
+			this.props.addChat();
+		}
 	}
 
 	render() {
@@ -23,6 +27,7 @@ class App extends React.Component<null, {
 				<div className="col-6"
 				     key={index}>
 					<Chat connection={connection}
+					      autoConnect={this.autoConnect}
 					      index={index}/>
 				</div>
 			)

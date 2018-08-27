@@ -3,6 +3,7 @@ import ChatMessages from '../ChatMessages';
 import './styles.scss';
 import {sendMessage, joinChat, disconnect} from '../../actions';
 import {connect} from 'react-redux';
+import PropTypes from 'prop-types';
 
 const initialState = {
 	isConnected: false,
@@ -22,11 +23,13 @@ export class Chat extends React.Component {
 	}
 
 	componentDidMount() {
-		this.setState({
-			userName: `User ${this.props.index}`
-		});
+		if (this.props.autoConnect) {
+			this.setState({
+				userName: `User ${this.props.index}`
+			});
+			window.setTimeout(this.connect.bind(this), 1000);
+		}
 		this.userNameInputRef && this.userNameInputRef.focus();
-		window.setTimeout(this.connect.bind(this), 1000);
 	}
 
 	componentWillUnmount() {
@@ -36,11 +39,11 @@ export class Chat extends React.Component {
 	}
 
 	componentWillReceiveProps(p1, p2) {
-		console.log('props change', p1,p2);
+		console.log('props change', p1, p2);
 	}
 
 	connect() {
-		console.log(this.state)
+		console.log(this.state);
 		this.props.onConnect(this.state.userName);
 	}
 
@@ -103,7 +106,7 @@ export class Chat extends React.Component {
 	}
 
 	render() {
-		const connectionMessage = this.props.connection.targetUserName ? (
+		const connectionMessage = this.props.connection && this.props.connection.targetUserName ? (
 			<React.Fragment>
 				Connected
 				as {this.props.connection.userName} with <strong>{this.props.connection.targetUserName}</strong>
@@ -193,9 +196,28 @@ export class Chat extends React.Component {
 	}
 }
 
+Chat.propTypes = {
+	autoConnect: PropTypes.bool,
+	onConnect: PropTypes.func,
+	onDisconnect: PropTypes.func,
+	onSendMessage: PropTypes.func,
+	connection: PropTypes.object,
+	index: PropTypes.number,
+}
+
+Chat.defaultProps = {
+	autoConnect: false,
+	onConnect: () => {
+	},
+	onDisconnect: () => {
+	},
+	onSendMessage: () => {
+	},
+};
+
 export default connect((state, ownProps) => {
 	return {
-		textMessages: state.messages[ownProps.connection.connectionId] || [],
+		textMessages: (ownProps.connection && state.messages[ownProps.connection.connectionId]) || [],
 		...ownProps.connection,
 	}
 }, (dispatch, ownProps) => {

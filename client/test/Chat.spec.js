@@ -1,16 +1,22 @@
 import React from 'react';
-import {mount} from 'enzyme';
+import {mount, shallow} from 'enzyme';
 import {expect} from 'chai';
-import Chat from "../src/components/Chat";
+import {Chat} from "../src/components/Chat";
 import {JSDOM} from 'jsdom'
 import * as sinon from "sinon";
+import configureStore from 'redux-mock-store';
 
 const dom = new JSDOM('<!doctype html><html><body></body></html>');
 global.window = dom.window;
 global.document = dom.window.document;
 
 describe('<Chat/>', () => {
-    const wrapper = mount(<Chat></Chat>);
+    var mockStore = configureStore([]);
+    const store = mockStore({
+        connections: [],
+        messages: {},
+    });
+    const wrapper = mount(<Chat store={store}></Chat>);
 
     it('Check if Chat component is created', () => {
         expect(wrapper.find('.Chat')).to.have.length(1);
